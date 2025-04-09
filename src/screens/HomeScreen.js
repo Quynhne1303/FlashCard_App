@@ -1,113 +1,122 @@
-import React, { useState, useLayoutEffect, useEffect } from "react";
+// src/screens/HomeScreen.js
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   FlatList,
   Button,
-  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
   Alert,
-} from "react-native";
-import { IconButton } from "react-native-paper";
-import { useIsFocused } from "@react-navigation/native";
-import { logout } from "../services/authService";
-import { getFlashcards } from "../services/flashcardService";
+  Keyboard,
+} from 'react-native';
+import { getDecks, saveDeckTitle, deleteDeck } from '../services/deckService';
+import Deck from '../components/Deck';
+import { useNavigation } from '@react-navigation/native';
 
-// 👉 Thêm import này để tránh lỗi ReferenceError
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase/firebaseConfig";
+const HomeScreen = () => {
+  const [decks, setDecks] = useState([]);
+  const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
-export default function HomeScreen({ navigation }) {
-  const [flashcards, setFlashcards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const isFocused = useIsFocused();
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <IconButton
-          icon="logout"
-          size={24}
-          onPress={async () => {
-            try {
-              await logout();
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "Login" }],
-              });
-            } catch (error) {
-              Alert.alert("Lỗi đăng xuất", error.message);
-            }
-          }}
-        />
-      ),
-    });
-  }, [navigation]);
-
-  // 👉 Xoá useEffect nếu không cần kiểm tra user nữa (vì đã làm ở App.js)
-  /*
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user || !user.emailVerified) {
-        navigation.replace("Login");
-      }
-    });
-
-    return () => unsubscribe();
+    loadDecks();
   }, []);
-  */
 
-  useEffect(() => {
-    if (isFocused) {
-      fetchFlashcards();
-    }
-  }, [isFocused]);
-
-  const fetchFlashcards = async () => {
+  const loadDecks = async () => {
     try {
-      const cards = await getFlashcards();
-      setFlashcards(cards);
+      const data = await getDecks();
+      setDecks(data);
     } catch (error) {
-      Alert.alert("Lỗi tải dữ liệu", error.message);
-    } finally {
-      setLoading(false);
+      Alert.alert('Lỗi khi tải bộ thẻ', error.message);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Đang tải bộ thẻ...</Text>
-      </View>
+  const addDeck = async () => {
+    if (!title.trim()) {
+      Alert.alert('Vui lòng nhập tên bộ thẻ.');
+      return;
+    }
+
+    setLoading(true);
+    Keyboard.dismiss();
+
+    try {
+      await saveDeckTitle(title);
+      setTitle('');
+      await loadDecks();
+      Alert.alert('Đã thêm bộ thẻ mới!');
+    } catch (error) {
+      Alert.alert('Lỗi khi thêm bộ thẻ', error.message);
+    }
+
+    setLoading(false);
+  };
+
+  const confirmDeleteDeck = (deck) => {
+    Alert.alert(
+      'Xác nhận xoá',
+      `Bạn có chắc muốn xoá bộ thẻ "${deck.title}"?`,
+      [
+        { text: 'Huỷ', style: 'cancel' },
+        {
+          text: 'Xoá',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDeck(deck.id);
+              await loadDecks();
+              Alert.alert('Đã xoá bộ thẻ!');
+            } catch (error) {
+              Alert.alert('Lỗi khi xoá bộ thẻ', error.message);
+            }
+          },
+        },
+      ]
     );
-  }
+  };
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
-      <Button
-        title="Thêm bộ thẻ"
-        onPress={() => navigation.navigate("AddDeck")}
+      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 10 }}>
+        Danh sách bộ thẻ
+      </Text>
+
+      <FlatList
+        data={decks}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <Deck
+            title={item.title}
+            onPress={() => navigation.navigate('DeckDetail', { deck: item })}
+            onLongPress={() => confirmDeleteDeck(item)} // 👈 xử lý xoá
+          />
+        )}
+        ListEmptyComponent={<Text>Không có bộ thẻ nào.</Text>}
+        contentContainerStyle={{ gap: 10 }}
       />
-      {flashcards.length === 0 ? (
-        <Text style={{ fontSize: 18, paddingVertical: 10 }}>
-          Chưa có bộ thẻ nào. Hãy tạo mới một bộ thẻ!
-        </Text>
+
+      <TextInput
+        placeholder="Nhập tên bộ thẻ mới"
+        value={title}
+        onChangeText={setTitle}
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          padding: 10,
+          marginTop: 20,
+          borderRadius: 8,
+        }}
+      />
+
+      {loading ? (
+        <ActivityIndicator size="large" style={{ marginTop: 10 }} />
       ) : (
-        <FlatList
-          data={flashcards}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("DeckDetail", { deck: item })
-              }
-            >
-              <Text style={{ fontSize: 18, paddingVertical: 10 }}>
-                {item.title}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
+        <Button title="Thêm bộ thẻ" onPress={addDeck} />
       )}
     </View>
   );
-}
+};
+
+export default HomeScreen;

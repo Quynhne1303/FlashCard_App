@@ -13,6 +13,8 @@ import AddDeckScreen from "./src/screens/AddDeckScreen";
 import DeckDetailScreen from "./src/screens/DeckDetailScreen";
 import AddCardScreen from "./src/screens/AddCardScreen";
 import StudyScreen from "./src/screens/StudyScreen";
+import QuizScreen from "./src/screens/QuizScreen";
+import EditCardScreen from "./src/screens/EditCardScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -33,11 +35,25 @@ export default function App() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>
-            <Stack.Screen name="HomeScreen" component={HomeScreen} />
-            <Stack.Screen name="AddDeck" component={AddDeckScreen} />
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ headerShown: true }}
+            />
+            <Stack.Screen
+              name="AddDeck"
+              component={AddDeckScreen}
+              options={{ headerShown: true }}
+            />
             <Stack.Screen name="DeckDetail" component={DeckDetailScreen} />
             <Stack.Screen name="AddCard" component={AddCardScreen} />
             <Stack.Screen name="Study" component={StudyScreen} />
+            <Stack.Screen name="Quiz" component={QuizScreen} />
+            <Stack.Screen
+              name="EditCard"
+              component={EditCardScreen}
+              options={{ title: "Chỉnh sửa thẻ" }}
+            />
           </>
         ) : (
           <>

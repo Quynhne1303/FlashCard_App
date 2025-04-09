@@ -1,7 +1,6 @@
 // src/screens/AddDeckScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, TextInput, Button, Alert } from 'react-native';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
 
@@ -9,6 +8,11 @@ const AddDeckScreen = ({ navigation }) => {
   const [title, setTitle] = useState('');
 
   const addDeck = async () => {
+    if (!title.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập tên bộ thẻ.");
+      return;
+    }
+
     try {
       await addDoc(collection(db, 'decks'), {
         userId: auth.currentUser.uid,
@@ -17,10 +21,9 @@ const AddDeckScreen = ({ navigation }) => {
       });
       navigation.navigate('Home');
     } catch (error) {
-      console.error("Lỗi lưu bộ thẻ:", error);
+      Alert.alert("Lỗi lưu bộ thẻ", error.message);
     }
   };
-  
 
   return (
     <View style={{ padding: 20 }}>

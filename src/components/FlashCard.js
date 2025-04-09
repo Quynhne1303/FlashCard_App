@@ -1,3 +1,4 @@
+//components/FlashCard.js
 import React, { useState, useRef } from 'react';
 import { Text, StyleSheet, View, Animated, TouchableWithoutFeedback } from 'react-native';
 
