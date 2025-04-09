@@ -1,16 +1,18 @@
 // App.js
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './src/firebase/firebaseConfig'; // Đảm bảo import đúng firebaseConfig
+import React, { useState, useEffect } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./src/firebase/firebaseConfig"; // Đảm bảo import đúng firebaseConfig
 
-import HomeScreen from './src/screens/HomeScreen';
-import AddDeckScreen from './src/screens/AddDeckScreen';
-import DeckDetailScreen from './src/screens/DeckDetailScreen';
-import AddCardScreen from './src/screens/AddCardScreen';
-import StudyScreen from './src/screens/StudyScreen';
-import LoginScreen from './src/screens/LoginScreen'; // Thêm màn hình đăng nhập
+import LoginScreen from "./src/screens/LoginScreen";
+import SignupScreen from "./src/screens/SignupScreen";
+import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
+import HomeScreen from "./src/screens/HomeScreen";
+import AddDeckScreen from "./src/screens/AddDeckScreen";
+import DeckDetailScreen from "./src/screens/DeckDetailScreen";
+import AddCardScreen from "./src/screens/AddCardScreen";
+import StudyScreen from "./src/screens/StudyScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -28,17 +30,24 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={user ? 'Home' : 'Login'}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="HomeScreen" component={HomeScreen} />
             <Stack.Screen name="AddDeck" component={AddDeckScreen} />
             <Stack.Screen name="DeckDetail" component={DeckDetailScreen} />
             <Stack.Screen name="AddCard" component={AddCardScreen} />
             <Stack.Screen name="Study" component={StudyScreen} />
           </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Signup" component={SignupScreen} />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+            />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

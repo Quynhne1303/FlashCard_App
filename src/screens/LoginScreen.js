@@ -1,47 +1,134 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, Alert } from 'react-native';
-import { auth } from '../firebase/firebaseConfig';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { TextInput, Button, Text } from "react-native-paper";
+import { signIn, resendVerification } from "../services/authService";
 
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigation.replace('Home'); // Chuyển hướng về màn hình Home sau khi đăng nhập
+      const userCredential = await signIn(email, password);
+      const signedInUser = userCredential.user;
+
+      if (signedInUser.emailVerified) {
+        Alert.alert("✅ Đăng nhập thành công!");
+        // KHÔNG cần navigation ở đây nữa
+      } else {
+        setUser(signedInUser);
+        Alert.alert(
+          "⚠️ Email chưa xác minh",
+          "Vui lòng kiểm tra hộp thư của bạn."
+        );
+      }
     } catch (error) {
-      Alert.alert('Lỗi đăng nhập', error.message);
+      Alert.alert("❌ Lỗi", error.message);
     }
   };
 
-  const handleRegister = async () => {
+  const handleResendVerification = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigation.replace('Home'); // Chuyển hướng về màn hình Home sau khi đăng ký
+      await resendVerification();
+      Alert.alert("📧 Đã gửi lại email xác minh!");
     } catch (error) {
-      Alert.alert('Lỗi đăng ký', error.message);
+      Alert.alert("Lỗi", error.message);
     }
   };
 
   return (
-    <View style={{ padding: 20 }}>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        style={{ borderWidth: 1, marginBottom: 10 }}
-      />
-      <TextInput
-        placeholder="Mật khẩu"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={{ borderWidth: 1, marginBottom: 10 }}
-      />
-      <Button title="Đăng nhập" onPress={handleLogin} />
-      <Button title="Đăng ký" onPress={handleRegister} />
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.container}
+    >
+      <View style={styles.card}>
+        <Text variant="headlineMedium" style={styles.title}>
+          🔐 Đăng nhập
+        </Text>
+
+        <TextInput
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          style={styles.input}
+          mode="outlined"
+        />
+
+        <TextInput
+          label="Mật khẩu"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+          mode="outlined"
+        />
+
+        <Button
+          mode="contained"
+          onPress={handleLogin}
+          style={styles.button}
+          contentStyle={{ paddingVertical: 6 }}
+        >
+          Đăng nhập
+        </Button>
+
+        <Button
+          onPress={() => navigation.navigate("Signup")}
+          style={styles.link}
+        >
+          Chưa có tài khoản? Đăng ký
+        </Button>
+
+        <Button
+          onPress={() => navigation.navigate("ForgotPassword")}
+          style={styles.link}
+        >
+          Quên mật khẩu?
+        </Button>
+
+        {user && !user.emailVerified && (
+          <Button
+            mode="outlined"
+            onPress={handleResendVerification}
+            style={styles.resendBtn}
+            contentStyle={{ paddingVertical: 4 }}
+          >
+            Gửi lại email xác minh
+          </Button>
+        )}
+      </View>
+    </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f6ff",
+    justifyContent: "center",
+    padding: 16,
+  },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  title: { textAlign: "center", marginBottom: 24 },
+  input: { marginBottom: 16 },
+  button: { marginTop: 8, borderRadius: 8 },
+  link: { marginTop: 8 },
+  resendBtn: { marginTop: 12, borderRadius: 8 },
+});

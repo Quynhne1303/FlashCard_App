@@ -1,25 +1,23 @@
-// src/firebase/firebaseConfig.js
+// firebaseConfig.ts
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage'; // Đảm bảo đã cài đặt package này
+import { getAuth } from 'firebase/auth';
+import { getDatabase } from 'firebase/database';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCUwcA_LhDhhqo53wbBU5oy3WZGEB3fFI4",
-  authDomain: "flashcard-50925.firebaseapp.com",
-  projectId: "flashcard-50925",
-  storageBucket: "flashcard-50925.firebasestorage.app",
-  messagingSenderId: "42413832918",
-  appId: "1:42413832918:web:721fb1511d155a5615a777",
-  measurementId: "G-70DCBLCZ41"
+  apiKey: "AIzaSyBfeZbv0sWwRHdrVAbmEA4i6p-4D0hl03g",
+  authDomain: "khang-a98ec.firebaseapp.com",
+  projectId: "khang-a98ec",
+  storageBucket: "khang-a98ec.appspot.com",
+  messagingSenderId: "77513894336",
+  appId: "1:77513894336:android:aa9146f84f72dcebf40025",
+  databaseURL: "https://khang-a98ec-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
+// Khởi tạo Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
-// Cấu hình Auth với AsyncStorage để lưu trạng thái đăng nhập
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage), // Thiết lập lưu trữ trạng thái đăng nhập
-});
-
-export { db, auth };
+// Export các dịch vụ Firebase
+export const auth = getAuth(app);
+export const database = getDatabase(app);
+export const storage = getStorage(app);
