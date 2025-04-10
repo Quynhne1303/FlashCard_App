@@ -1,10 +1,8 @@
-// src/screens/HomeScreen.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
 import {
   View,
   Text,
   FlatList,
-  Button,
   TextInput,
   ActivityIndicator,
   Alert,
@@ -13,16 +11,47 @@ import {
 import { getDecks, saveDeckTitle, deleteDeck } from '../services/deckService';
 import Deck from '../components/Deck';
 import { useNavigation } from '@react-navigation/native';
+import { getAuth, signOut } from 'firebase/auth';
+import { Menu, Provider } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const HomeScreen = () => {
   const [decks, setDecks] = useState([]);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
     loadDecks();
   }, []);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={
+            <Icon
+              name="dots-vertical"
+              size={24}
+              style={{ marginRight: 10 }}
+              onPress={() => setMenuVisible(true)}
+            />
+          }
+        >
+          <Menu.Item onPress={() => {
+            setMenuVisible(false);
+            navigation.navigate("Stats");
+          }} title="📈 Thống kê" />
+          <Menu.Item onPress={handleLogout} title="🚪 Đăng xuất" />
+        </Menu>
+      ),
+      headerShown: true,
+      title: "Trang chủ"
+    });
+  }, [navigation, menuVisible]);
 
   const loadDecks = async () => {
     try {
@@ -77,45 +106,69 @@ const HomeScreen = () => {
     );
   };
 
+  const handleLogout = async () => {
+    setMenuVisible(false);
+    try {
+      await signOut(getAuth());
+    } catch (error) {
+      Alert.alert('Lỗi khi đăng xuất', error.message);
+    }
+  };
+
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 10 }}>
-        Danh sách bộ thẻ
-      </Text>
+    <Provider>
+      <View style={{ flex: 1, padding: 20 }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', marginVertical: 10 }}>
+          Danh sách bộ thẻ
+        </Text>
 
-      <FlatList
-        data={decks}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Deck
-            title={item.title}
-            onPress={() => navigation.navigate('DeckDetail', { deck: item })}
-            onLongPress={() => confirmDeleteDeck(item)} // 👈 xử lý xoá
-          />
+        <FlatList
+          data={decks}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Deck
+              title={item.title}
+              onPress={() => navigation.navigate('DeckDetail', { deck: item })}
+              onLongPress={() => confirmDeleteDeck(item)}
+            />
+          )}
+          ListEmptyComponent={<Text>Không có bộ thẻ nào.</Text>}
+          contentContainerStyle={{ gap: 10 }}
+        />
+
+        <TextInput
+          placeholder="Nhập tên bộ thẻ mới"
+          value={title}
+          onChangeText={setTitle}
+          style={{
+            borderWidth: 1,
+            borderColor: '#ccc',
+            padding: 10,
+            marginTop: 20,
+            borderRadius: 8,
+          }}
+        />
+
+        {loading ? (
+          <ActivityIndicator size="large" style={{ marginTop: 10 }} />
+        ) : (
+          <Text
+            onPress={addDeck}
+            style={{
+              backgroundColor: '#2196F3',
+              color: 'white',
+              textAlign: 'center',
+              padding: 12,
+              borderRadius: 8,
+              marginTop: 10,
+              fontWeight: 'bold',
+            }}
+          >
+            ➕ Thêm bộ thẻ
+          </Text>
         )}
-        ListEmptyComponent={<Text>Không có bộ thẻ nào.</Text>}
-        contentContainerStyle={{ gap: 10 }}
-      />
-
-      <TextInput
-        placeholder="Nhập tên bộ thẻ mới"
-        value={title}
-        onChangeText={setTitle}
-        style={{
-          borderWidth: 1,
-          borderColor: '#ccc',
-          padding: 10,
-          marginTop: 20,
-          borderRadius: 8,
-        }}
-      />
-
-      {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 10 }} />
-      ) : (
-        <Button title="Thêm bộ thẻ" onPress={addDeck} />
-      )}
-    </View>
+      </View>
+    </Provider>
   );
 };
 
