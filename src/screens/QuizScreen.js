@@ -8,6 +8,10 @@ import {
   StyleSheet,
 } from "react-native";
 import { getFlashcardsByDeck } from "../services/flashcardService";
+import { getAuth } from "firebase/auth";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
+
 
 const QuizScreen = ({ route, navigation }) => {
   const { deckId } = route.params;
@@ -36,18 +40,34 @@ const QuizScreen = ({ route, navigation }) => {
     loadFlashcards();
   }, [loadFlashcards]);
 
-  const handleCheck = () => {
+  const handleCheck = async () => {
     const { card, direction } = cards[0];
     const correctAnswer =
       direction === "enToVi"
         ? card.back.trim().toLowerCase()
         : card.front.trim().toLowerCase();
-
+  
     const userAns = userAnswer.trim().toLowerCase();
     const correct = userAns === correctAnswer;
-
+  
     setIsCorrect(correct);
     setShowResult(true);
+  
+    // ✅ Ghi thống kê vào Firestore
+    try {
+      const currentUser = getAuth().currentUser;
+      if (currentUser) {
+        await addDoc(collection(db, "statistics"), {
+          userId: currentUser.uid,
+          cardId: card.id,
+          deckId: card.deckId || deckId, // fallback nếu card.deckId không có
+          correct,
+          timestamp: Date.now(),
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi ghi thống kê:", error);
+    }
   };
 
   const handleNext = () => {
